@@ -1,7 +1,6 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from config import Config
-from app import routes, models
 
 # Initialize the SQLAlchemy object globally
 db = SQLAlchemy()
@@ -16,8 +15,9 @@ def create_app():
     # Initialize the database with the app
     db.init_app(app)
 
-    # Register blueprints and create database tables
+    # Import routes and models here to avoid circular import issues
     with app.app_context():
+        from app import routes, models  # Deferred import after app is created
         db.create_all()  # Ensure database tables are created
 
     # Register routes blueprint
