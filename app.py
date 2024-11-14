@@ -13,13 +13,14 @@ def create_app():
     # Initialize the database with the app
     db.init_app(app)
 
-    # Import and register the blueprint AFTER initializing the app and db
-    from app.routes import bp as routes_bp  # Correctly reference the routes in the 'app' folder
+    # Import and register the blueprint after initializing the app and db
+    from routes import bp as routes_bp
     app.register_blueprint(routes_bp)
 
     # Ensure database tables are created within the app context
     with app.app_context():
-        from app import models  # Correctly reference models in the 'app' folder
+        # Import models explicitly to avoid circular imports and syntax errors
+        import models
         db.create_all()
 
     return app
