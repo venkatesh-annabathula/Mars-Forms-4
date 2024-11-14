@@ -1,35 +1,25 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from config import Config
+from flask_sqlalchemy import SQLAlchemy
 
-# Initialize the SQLAlchemy object globally
 db = SQLAlchemy()
 
 def create_app():
-    # Create Flask app instance
     app = Flask(__name__)
-    
-    # Configure the app
     app.config.from_object(Config)
-    
-    # Initialize the database with the app
+
     db.init_app(app)
 
-    from app import routes, models
+    # Import routes and models only after db and app have been initialized
+    from app.routes import bp as routes_bp
 
-    # Import routes and models here to avoid circular import issues
     with app.app_context():
-          # Deferred import after app is created
         db.create_all()  # Ensure database tables are created
 
-    # Register routes blueprint
-    app.register_blueprint(routes.bp)
-
+    app.register_blueprint(routes_bp)
     return app
 
-# Create the app instance
-app = create_app()
-
-# If this script is run directly, start the Flask server
+# Entry point for running the app
 if __name__ == "__main__":
+    app = create_app()
     app.run(debug=True)
