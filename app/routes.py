@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, session, flash
 from app import db
-from app.forms import PersonalInfoForm, TravelPreferencesForm, HealthSafetyForm
-from app.models import Applicant
+from forms import PersonalInfoForm, TravelPreferencesForm, HealthSafetyForm
+from models import Applicant
 
 bp = Blueprint('main', __name__)
 
