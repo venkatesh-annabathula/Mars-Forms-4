@@ -2,6 +2,7 @@
 from flask import Flask
 from config import Config
 from flask_sqlalchemy import SQLAlchemy
+from app import routes, models
 
 # Initialize the database
 db = SQLAlchemy()
@@ -15,10 +16,10 @@ def create_app():
     db.init_app(app)
 
     # Import and register blueprints to avoid circular imports
-    with app.app_context():
-        from app import routes, models  # Import routes and models here to avoid circular dependencies
+    with app.app_context():  # Import routes and models here to avoid circular dependencies
         db.create_all()  # Ensure database tables are created
-        app.register_blueprint(routes.bp)  # Register the blueprint for routes
+    
+    app.register_blueprint(routes.bp)  # Register the blueprint for routes
 
     return app
 
