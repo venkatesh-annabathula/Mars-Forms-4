@@ -15,9 +15,11 @@ def create_app():
     # Initialize the database with the app
     db.init_app(app)
 
+    from app import routes, models
+
     # Import routes and models here to avoid circular import issues
     with app.app_context():
-        from app import routes, models  # Deferred import after app is created
+          # Deferred import after app is created
         db.create_all()  # Ensure database tables are created
 
     # Register routes blueprint
