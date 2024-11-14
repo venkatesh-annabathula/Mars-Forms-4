@@ -19,7 +19,8 @@ def create_app():
 
     # Ensure database tables are created within the app context
     with app.app_context():
-        from models import *  # Import models here to avoid circular imports
+        # Import models explicitly to avoid circular imports and syntax errors
+        import models
         db.create_all()
 
     return app
