@@ -1,33 +1,70 @@
-from flask import Flask
-from config import Config
-from flask_sqlalchemy import SQLAlchemy
+from flask import Blueprint, render_template, redirect, url_for, session, flash
+from app import db
+from app.forms import PersonalInfoForm, TravelPreferencesForm, HealthSafetyForm
+from app.models import Applicant
 
-# Initialize the database
-db = SQLAlchemy()
+bp = Blueprint('main', __name__)
 
-# Function to create the app
-def create_app():
-    app = Flask(__name__)
-    app.config.from_object(Config)
+@bp.route('/')
+def index():
+    return render_template('index.html')
 
-    # Initialize the database with the app
-    db.init_app(app)
+@bp.route('/stage1', methods=['GET', 'POST'])
+def stage1():
+    form = PersonalInfoForm()
+    if form.validate_on_submit():
+        session['personal_info'] = form.data
+        return redirect(url_for('main.stage2'))
+    return render_template('stage1_personal_info.html', form=form)
 
-    # Import and register the blueprint after initializing the app and db
-    from routes import bp as routes_bp
-    app.register_blueprint(routes_bp)
+@bp.route('/stage2', methods=['GET', 'POST'])
+def stage2():
+    form = TravelPreferencesForm()
+    if form.validate_on_submit():
+        if form.back.data:
+            return redirect(url_for('main.stage1'))
+        session['travel_preferences'] = form.data
+        return redirect(url_for('main.stage3'))
+    return render_template('stage2_travel_preferences.html', form=form)
 
-    # Ensure database tables are created within the app context
-    with app.app_context():
-        # Import models explicitly to avoid circular imports and syntax errors
-        import models
-        db.create_all()
+@bp.route('/stage3', methods=['GET', 'POST'])
+def stage3():
+    form = HealthSafetyForm()
+    if form.validate_on_submit():
+        if form.back.data:
+            return redirect(url_for('main.stage2'))
+        
+        # Combine all data from session and current form
+        data = {**session['personal_info'], **session['travel_preferences'], **form.data}
+        
+        # Create an Applicant instance and save to the database
+        applicant = Applicant(
+            full_name=data['full_name'],
+            date_of_birth=str(data['date_of_birth']),
+            nationality=data['nationality'],
+            email=data['email'],
+            phone=data['phone'],
+            departure_date=str(data['departure_date']),
+            return_date=str(data['return_date']),
+            accommodation=data['accommodation'],
+            special_requests=data.get('special_requests', ''),
+            health_declaration=data['health_declaration'],
+            emergency_contact=data['emergency_contact'],
+            medical_conditions=data.get('medical_conditions', '')
+        )
+        db.session.add(applicant)
+        db.session.commit()
 
-    return app
+        session.clear()  # Clear session after saving
+        return redirect(url_for('main.success'))
+    return render_template('stage3_health_safety.html', form=form)
 
-# Create the app instance
-app = create_app()
+@bp.route('/success')
+def success():
+    return render_template('success.html')
 
-# Entry point for running the app
-if __name__ == "__main__":
-    app.run(debug=True)
+
+@bp.route('/admin/applications')
+def admin_applications():
+    applicants = Applicant.query.all()
+    return render_template('admin_applications.html', applicants=applicants)
